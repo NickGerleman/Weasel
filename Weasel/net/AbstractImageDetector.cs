@@ -15,11 +15,11 @@ namespace Rs.Net
     {
         private static readonly TimeSpan MaxStateCheckDelay = TimeSpan.FromMinutes(10);
         private static readonly TimeSpan InitialDelay = TimeSpan.FromMilliseconds(2);
-        protected ImageDetectorState mDetectorState;
+        protected ImageDetectorState mState;
         private DateTime mStateLastChecked;
         private TimeSpan mStateCheckDelay = InitialDelay;
 
-        public ImageDetectorState State => mDetectorState;
+        public ImageDetectorState State => mState;
 
         public abstract string ServiceName { get; }
 
@@ -32,7 +32,7 @@ namespace Rs.Net
 
 
             mStateLastChecked = DateTime.Now;
-            mDetectorState = await CheckStateAsyncCore();
+            mState = await CheckStateAsyncCore();
             
             if (State == ImageDetectorState.Good)
             {
@@ -62,8 +62,8 @@ namespace Rs.Net
                 throw new InvalidOperationException("Detector is in an invalid state");
 
             var images = await DetectImagesAsyncCore(url);
-            if (mDetectorState == ImageDetectorState.BadNetwork || mDetectorState == ImageDetectorState.Broken)
-                throw new ImageDetectionException(mDetectorState);
+            if (mState == ImageDetectorState.BadNetwork || mState == ImageDetectorState.Broken)
+                throw new ImageDetectionException(mState);
 
             return images;
 

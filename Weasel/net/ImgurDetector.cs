@@ -179,7 +179,7 @@ namespace Rs.Net {
                     break;
                 default:
                     Log($"Unknown MIME type \"{mimeType}\"", LogLevel.Error);
-                    mDetectorState = ImageDetectorState.Broken;
+                    mState = ImageDetectorState.Broken;
                     break;
             }
 
@@ -214,17 +214,17 @@ namespace Rs.Net {
         {
             if (res.StatusCode == HttpStatusCode.NotFound)
             {
-                mDetectorState = ImageDetectorState.Good;
+                mState = ImageDetectorState.Good;
                 return false;
             }
             else if (!res.IsSuccessStatusCode)
             {
-                mDetectorState = ImageDetectorState.BadNetwork;
+                mState = ImageDetectorState.BadNetwork;
                 return false;
             }
             else if (!res.Headers.Contains("X-RateLimit-ClientRemaining"))
             {
-                mDetectorState = ImageDetectorState.Good;
+                mState = ImageDetectorState.Good;
                 return true;
             }
 
@@ -233,9 +233,9 @@ namespace Rs.Net {
                                   .First();
 
             if (rateLimitStr == "0")
-                mDetectorState = ImageDetectorState.RateLimited;
+                mState = ImageDetectorState.RateLimited;
             else
-                mDetectorState = ImageDetectorState.Good;
+                mState = ImageDetectorState.Good;
 
             return true;
         }
