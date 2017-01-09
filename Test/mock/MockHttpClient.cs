@@ -86,7 +86,7 @@ namespace Rs.Mock
         /// <param name="response">A predefined response</param>
         public void SetResponse(string endpoint, MockHttpResponse response)
         {
-            SetResponsePattern(Regex.Escape(endpoint), response);
+            SetResponsePattern($"{Regex.Escape(endpoint)}$", response);
         }
 
 
@@ -199,6 +199,9 @@ namespace Rs.Mock
             var handler = new MockHttpMessageHandler(baseUrl);
             var client = new MockHttpClient(handler);
             client.mMessageHandler = handler;
+
+            // Mock a response to Google for network connectivity checks.
+            client.SetResponse("https://www.google.com/", new MockHttpResponse());
 
             return client;
         }
