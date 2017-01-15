@@ -7,12 +7,13 @@ using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
-using Rs.Image;
+using Wsl.Image;
 
-using static Rs.LoggerFor<Rs.Net.ImgurDetector>;
+using static Wsl.LoggerFor<Wsl.Detection.ImgurDetector>;
 
 
-namespace Rs.Net {
+namespace Wsl.Detection
+{
 
     /// <summary>
     /// ImageDetector that is able to detect images from URLs pointing to
@@ -119,7 +120,7 @@ namespace Rs.Net {
                 var records = new List<ImageRecord>();
 
                 foreach (dynamic imageModel in imageModels)
-                    records.Add(RecordFromMime((string)imageModel.link, (string)imageModel.type));
+                    records.Add(new ImageRecord(new Uri((string)imageModel.link), (string)imageModel.type));
 
                 return records;
             }
@@ -150,40 +151,9 @@ namespace Rs.Net {
                 else if (mediaType == "image/png")
                     url.Replace(".jpg", ".png");
 
-                var record = RecordFromMime(url, mediaType);
+                var record = new ImageRecord(new Uri(url), mediaType);
                 return new List<ImageRecord> {record};
             }
-        }
-
-
-        /// <summary>
-        /// Create an ImageRecord from a url and miime type
-        /// </summary>
-        /// <param name="urlString">The url for the image</param>
-        /// <param name="mimeType">The mime type of the image</param>
-        private ImageRecord RecordFromMime(string urlString, string mimeType)
-        {
-            var record = new ImageRecord { Url = new Uri(urlString) };
-
-            switch (mimeType)
-            {
-                case "image/gif":
-                    record.Format = ImageFormat.Gif;
-                    break;
-                case "image/jpeg":
-                case "image/jpg":
-                    record.Format = ImageFormat.Jpg;
-                    break;
-                case "image/png":
-                    record.Format = ImageFormat.Png;
-                    break;
-                default:
-                    Log($"Unknown MIME type \"{mimeType}\"", LogLevel.Error);
-                    mState = ImageDetectorState.Broken;
-                    break;
-            }
-
-            return record;
         }
 
 

@@ -11,7 +11,7 @@ using Xunit;
 
 using HeaderList = System.Collections.Generic.List<System.Tuple<string, string>>;
 
-namespace Rs.Mock
+namespace Wsl.Mock
 {
 
     /// <summary>

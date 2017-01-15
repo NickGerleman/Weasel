@@ -1,16 +1,14 @@
 ﻿using System.Net;
 using System.Net.Http;
-using System.Threading;
 using System.Threading.Tasks;
 
-namespace Rs.Net
+namespace Wsl
 {
     /// <summary>
-    /// Convenience methods for network operations
+    /// Network Utilities
     /// </summary>
-    public static class NetUtils
+    public static partial class Util
     {
-
         /// <summary>
         /// Whether the client has an available internet connection. This will
         /// make an HttpRequest and is thus potentially very slow.
@@ -25,6 +23,5 @@ namespace Rs.Net
                 return response.StatusCode == HttpStatusCode.OK;
 
         }
-
     }
 }

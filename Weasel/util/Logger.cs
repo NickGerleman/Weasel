@@ -1,7 +1,7 @@
 using System;
 using Microsoft.Extensions.Logging;
 
-namespace Rs
+namespace Wsl
 {
 
     /// <summary>
@@ -53,6 +53,20 @@ namespace Rs
 
             // Formatter is the same as the abstraction built into Logger
             GetInstance().Log(level, 0 /*eventId*/, message, ex, (state, e) => state.ToString()/*formatter*/);
+        }
+
+
+        /// <summary>
+        /// Log a message and throw an exception constructed using the message.
+        /// </summary>
+        /// <param name="exType">The type of exception to create.</param>
+        /// <param name="message">The message to log and use for the exception</param>
+        /// <param name="level">The importance of the event</param>
+        public static void LogAndThrow(Type exType, string message, LogLevel level = LogLevel.Information)
+        {
+            var exception = (Exception) Activator.CreateInstance(exType, message);
+            Log(message, level);
+            throw exception;
         }
 
 

@@ -2,15 +2,14 @@ using System;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Threading;
-using Rs.Image;
-using Rs.Mock;
-using Rs.Net;
+using Wsl.Image;
+using Wsl.Mock;
 using Xunit;
 
 using HeaderList = System.Collections.Generic.List<System.Tuple<string, string>>;
 using System.Collections.Generic;
 
-namespace Rs.Test
+namespace Wsl.Detection.Test
 {
 
     public class ImgurDetectorTest

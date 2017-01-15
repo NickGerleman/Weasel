@@ -1,11 +1,10 @@
-﻿using Rs.Mock;
-using Rs.Net;
+﻿using Wsl.Mock;
 using System.Net;
 using Xunit;
 
-namespace Rs.Test
+namespace Wsl.Test
 {
-    public class NetUtilsTest
+    public class NetTest
     {
 
         [Fact]
@@ -13,7 +12,7 @@ namespace Rs.Test
         {
             // Mock client responds to Google by default
             var mockClient = MockHttpClient.Build("http://abc.xyz");
-            var task = NetUtils.HasInternetConnectionAsync(mockClient);
+            var task = Util.HasInternetConnectionAsync(mockClient);
             task.Wait();
             Assert.True(task.Result);
         }
@@ -25,7 +24,7 @@ namespace Rs.Test
             var mockClient = MockHttpClient.Build("http://abc.xyz");
             mockClient.SetResponse("https://www.google.com/", new MockHttpResponse { StatusCode = HttpStatusCode.RequestTimeout });
 
-            var task = NetUtils.HasInternetConnectionAsync(mockClient);
+            var task = Util.HasInternetConnectionAsync(mockClient);
             task.Wait();
             Assert.False(task.Result);
         }

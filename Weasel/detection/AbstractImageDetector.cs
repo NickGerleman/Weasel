@@ -2,11 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
-using Rs.Image;
+using Wsl.Image;
 
-using static Rs.LoggerFor<Rs.Net.AbstractImageDetector>;
+using static Wsl.LoggerFor<Wsl.Detection.AbstractImageDetector>;
 
-namespace Rs.Net
+namespace Wsl.Detection
 {
     /// <summary>
     /// Shared logic between detectors
@@ -25,6 +25,10 @@ namespace Rs.Net
 
         public async Task<ImageDetectorState> CheckStateAsync()
         {
+            // Don't retry anything if our detector is broken.
+            if (State == ImageDetectorState.Broken)
+                return State;
+
             // Don't do anything unless we're past our imposed delay
             if (DateTime.Now < mStateLastChecked + mStateCheckDelay)
                 return State;
@@ -32,8 +36,17 @@ namespace Rs.Net
 
 
             mStateLastChecked = DateTime.Now;
-            mState = await CheckStateAsyncCore();
-            
+
+            try
+            {
+                mState = await CheckStateAsyncCore();
+            }
+            catch (Exception ex)
+            {
+                Log($"Exception occured while detecting state", LogLevel.Error, ex);
+                mState = ImageDetectorState.Broken;
+            }
+
             if (State == ImageDetectorState.Good)
             {
                 mStateCheckDelay = TimeSpan.Zero;
@@ -61,11 +74,20 @@ namespace Rs.Net
             if (State != ImageDetectorState.Good)
                 throw new InvalidOperationException("Detector is in an invalid state");
 
-            var images = await DetectImagesAsyncCore(url);
+            List<ImageRecord> images = null;
+            try
+            {
+                images = await DetectImagesAsyncCore(url);
+            }
+            catch (Exception ex)
+            {
+                Log($"Exception occured while detecting images", LogLevel.Error, ex);
+            }
+
             if (mState == ImageDetectorState.BadNetwork || mState == ImageDetectorState.Broken)
                 throw new ImageDetectionException(mState);
-
-            return images;
+            else
+                return images;
 
         }
 
