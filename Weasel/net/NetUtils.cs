@@ -21,11 +21,9 @@ namespace Rs.Net
             // There's no nice cross platform way to check internet
             // connectivity. We could add a bunch of P/Invoke shims for Windows
             // and OS X but we would need this for Linux anyway.
+            using (var response = await httpClient.GetAsync("https://www.google.com/", HttpCompletionOption.ResponseHeadersRead))
+                return response.StatusCode == HttpStatusCode.OK;
 
-            var cancelTokenSource = new CancellationTokenSource();
-            var response = await httpClient.GetAsync("https://www.google.com/", cancelTokenSource.Token);
-            cancelTokenSource.Cancel();
-            return response.StatusCode == HttpStatusCode.OK;
         }
 
     }

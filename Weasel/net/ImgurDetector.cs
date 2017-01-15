@@ -4,7 +4,6 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
-using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
@@ -79,25 +78,26 @@ namespace Rs.Net {
             if (pathSegments[1] == "a")
                 return await DetectAlbumImagesAsync(id);
             else
-                return await DetectImageAsync(id);
+                return await DetectSingleImageAsync(id);
         }
 
 
         protected async override Task<ImageDetectorState> CheckStateAsyncCore()
         {
-            var response = await RequestAsync("/credits");
-        
-            if (!response.IsSuccessStatusCode)
-                return ImageDetectorState.BadNetwork;
+            using (var response = await RequestAsync("/credits"))
+            {
+                if (!response.IsSuccessStatusCode)
+                    return ImageDetectorState.BadNetwork;
 
-            var resString = await response.Content.ReadAsStringAsync();
-            dynamic resObject = JObject.Parse(resString);
-            int remainingRequests = resObject.data.ClientRemaining;
-        
-            if (remainingRequests > 0)
-                return ImageDetectorState.Good;
-            else
-                return ImageDetectorState.RateLimited;
+                var resString = await response.Content.ReadAsStringAsync();
+                dynamic resObject = JObject.Parse(resString);
+                int remainingRequests = resObject.data.ClientRemaining;
+
+                if (remainingRequests > 0)
+                    return ImageDetectorState.Good;
+                else
+                    return ImageDetectorState.RateLimited;
+            }
         }
 
 
@@ -108,19 +108,21 @@ namespace Rs.Net {
         /// <param name="httpClient">An HttpClient to use</param>
         private async Task<List<ImageRecord>> DetectAlbumImagesAsync(string albumId)
         {
-            var response = await RequestAsync($"/album/{albumId}");
-            if (!CheckStateFromResponse(response))
-                return new List<ImageRecord>();
+            using (var response = await RequestAsync($"/album/{albumId}"))
+            {
+                if (!CheckStateFromResponse(response))
+                    return new List<ImageRecord>();
 
-            var resString = await response.Content.ReadAsStringAsync();
-            dynamic resObject = JObject.Parse(resString);
-            dynamic imageModels = resObject.data.images;
-            var records = new List<ImageRecord>();
+                var resString = await response.Content.ReadAsStringAsync();
+                dynamic resObject = JObject.Parse(resString);
+                dynamic imageModels = resObject.data.images;
+                var records = new List<ImageRecord>();
 
-            foreach (dynamic imageModel in imageModels)
-                records.Add(RecordFromMime((string)imageModel.link, (string)imageModel.type));
+                foreach (dynamic imageModel in imageModels)
+                    records.Add(RecordFromMime((string)imageModel.link, (string)imageModel.type));
 
-            return records;
+                return records;
+            }
         }
 
 
@@ -129,30 +131,28 @@ namespace Rs.Net {
         /// </summary>
         /// <param name="imageId">The id of the image</param>
         /// <param name="httpClient">An HttpClient to use</param>
-        private async Task<List<ImageRecord>> DetectImageAsync(string imageId)
+        private async Task<List<ImageRecord>> DetectSingleImageAsync(string imageId)
         {
             // Avoid using the API so that we conserve requests and don't get rate
             // limited. We can say jpg and it will gice us the correct format in
             // the header
-            var cancellationTokenSource = new CancellationTokenSource();
             var url = $"http://i.imgur.com/{imageId}.jpg";
-            var response = await mHttpClient.GetAsync(url, cancellationTokenSource.Token);
-        
-            // We only want the headers, cancel the request
-            cancellationTokenSource.Cancel();
 
-            if (!CheckStateFromResponse(response))
-                return new List<ImageRecord>();
+            using (var response = await mHttpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead))
+            {
+                 if (!CheckStateFromResponse(response))
+                    return new List<ImageRecord>();
 
-            // Modify the url to represent the actual file type
-            var mediaType = response.Content.Headers.ContentType.MediaType;
-            if (mediaType == "image/gif")
-                url.Replace(".jpg", ".gif");
-            else if (mediaType == "image/png")
-                url.Replace(".jpg", ".png");
+                // Modify the url to represent the actual file type
+                var mediaType = response.Content.Headers.ContentType.MediaType;
+                if (mediaType == "image/gif")
+                    url.Replace(".jpg", ".gif");
+                else if (mediaType == "image/png")
+                    url.Replace(".jpg", ".png");
 
-            var record = RecordFromMime(url, mediaType);
-            return new List<ImageRecord> {record};
+                var record = RecordFromMime(url, mediaType);
+                return new List<ImageRecord> {record};
+            }
         }
 
 

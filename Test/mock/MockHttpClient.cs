@@ -126,13 +126,41 @@ namespace Rs.Mock
 
             foreach (var response in mMockResponses)
             {
+                // Don't reuse responses since the caller will dispose of it
                 if (response.Item1.IsMatch(requestUrl))
-                    return response.Item2;
+                    return CloneHttpResponse(response.Item2);
             }
 
             return new HttpResponseMessage(HttpStatusCode.NotFound);
         }
     #pragma warning restore 1998
+
+
+        /// <summary>
+        /// Create a deep copy of an HttpResponse message
+        /// </summary>
+        /// <param name="original">The original response</param>
+        private static HttpResponseMessage CloneHttpResponse(HttpResponseMessage original)
+        {
+            var clone = new HttpResponseMessage
+            {
+                ReasonPhrase = original.ReasonPhrase,
+                RequestMessage = original.RequestMessage,
+                StatusCode = original.StatusCode,
+                Version = original.Version
+            };
+
+            var byteContentTask = original.Content.ReadAsByteArrayAsync();
+            byteContentTask.Wait();
+            clone.Content = new ByteArrayContent(byteContentTask.Result);
+
+            foreach (var contentHeader in original.Content.Headers)
+                clone.Content.Headers.Add(contentHeader.Key, contentHeader.Value);
+            foreach (var header in original.Headers)
+                clone.Headers.Add(header.Key, header.Value);
+
+            return clone;
+        }
 
 
         /// <summary>
